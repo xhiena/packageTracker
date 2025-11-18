@@ -1,16 +1,125 @@
-# React + Vite
+# Package Tracker Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React-based frontend application for tracking shipping packages. Built with Vite and styled with Tailwind CSS.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Authentication System**
+  - User registration
+  - Login/Logout
+  - Forgot password
+  - Reset password
+  
+- **Package Management**
+  - View all tracked packages
+  - Add new packages with tracking numbers
+  - Select carrier from dropdown
+  - Delete packages
+  - Display latest status and updates
 
-## React Compiler
+- **Responsive Design**
+  - Mobile-friendly interface
+  - Grid layout for package cards
+  - Modal dialogs for forms
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech Stack
 
-## Expanding the ESLint configuration
+- **React 18** - UI framework
+- **Vite** - Build tool and dev server
+- **Tailwind CSS v3** - Utility-first CSS framework
+- **Axios** - HTTP client for API requests
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Prerequisites
+
+- Node.js 18+ 
+- npm or yarn
+- FastAPI backend running on `http://localhost:8000`
+
+## Installation
+
+```bash
+npm install
+```
+
+## Development
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:5173/`
+
+## Build for Production
+
+```bash
+npm run build
+```
+
+The production-ready files will be in the `dist/` directory.
+
+## Preview Production Build
+
+```bash
+npm run preview
+```
+
+## Project Structure
+
+```
+frontend/
+├── src/
+│   ├── components/          # Reusable components
+│   │   └── AddPackageModal.jsx
+│   ├── pages/              # Page components
+│   │   ├── AuthView.jsx    # Authentication page
+│   │   └── Dashboard.jsx   # Main dashboard
+│   ├── services/           # API service layer
+│   │   └── api.js          # Axios configuration and API calls
+│   ├── App.jsx             # Main app component
+│   ├── main.jsx            # Application entry point
+│   └── index.css           # Global styles and Tailwind imports
+├── public/                 # Static assets
+├── index.html             # HTML template
+├── tailwind.config.js     # Tailwind configuration
+├── postcss.config.js      # PostCSS configuration
+└── vite.config.js         # Vite configuration
+```
+
+## API Integration
+
+The frontend communicates with a FastAPI backend on `http://localhost:8000`. JWT tokens are automatically included in requests via Axios interceptors.
+
+### Required Backend Endpoints
+
+**Authentication:**
+- `POST /auth/register` - Register new user
+- `POST /auth/login` - Login and receive JWT token
+- `POST /auth/forgot-password` - Request password reset
+- `POST /auth/reset-password` - Reset password with token
+
+**Packages:**
+- `GET /packages` - Get all packages (requires auth)
+- `POST /packages` - Add new package (requires auth)
+- `DELETE /packages/{id}` - Delete package (requires auth)
+- `PUT /packages/{id}` - Update package (requires auth)
+
+**Carriers:**
+- `GET /carriers` - Get list of supported carriers
+
+## Environment Configuration
+
+To change the API base URL, edit `src/services/api.js`:
+
+```javascript
+const API_BASE_URL = 'http://localhost:8000';
+```
+
+## Authentication
+
+The app uses JWT token-based authentication. Tokens are stored in `localStorage` and automatically included in API requests via Axios interceptors.
+
+## License
+
+MIT
