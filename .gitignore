@@ -206,5 +206,13 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
+# Environment files
+.env
+backend/.env
+frontend/.env
+
 # Database
 *.db
+
+# Test database
+test.db
