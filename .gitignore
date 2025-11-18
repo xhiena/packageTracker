@@ -205,3 +205,12 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Test database
+test.db
+
+# Coverage reports
+htmlcov/
+.coverage
+coverage.xml
+.pytest_cache/
