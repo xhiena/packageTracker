@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Index
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.types import JSON
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.db.database import Base
@@ -17,7 +18,8 @@ class Package(Base):
     description = Column(String(500), nullable=True)
     status = Column(String(100), nullable=True)
     last_location = Column(String(255), nullable=True)
-    tracking_data = Column(JSONB, nullable=True)  # PostgreSQL JSONB for full tracking history
+    # Use JSON.with_variant to support both PostgreSQL (JSONB) and SQLite (JSON)
+    tracking_data = Column(JSON().with_variant(JSONB(), "postgresql"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
