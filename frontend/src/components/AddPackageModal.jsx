@@ -12,24 +12,24 @@ function AddPackageModal({ onClose, onSuccess }) {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    const fetchCarriers = async () => {
+      try {
+        const response = await carriersAPI.getAll();
+        setCarriers(response.data);
+      } catch (err) {
+        console.error('Failed to load carriers:', err);
+        // Use default carriers if API fails
+        setCarriers([
+          { id: 'ups', name: 'UPS' },
+          { id: 'usps', name: 'USPS' },
+          { id: 'fedex', name: 'FedEx' },
+          { id: 'dhl', name: 'DHL' },
+        ]);
+      }
+    };
+    
     fetchCarriers();
   }, []);
-
-  const fetchCarriers = async () => {
-    try {
-      const response = await carriersAPI.getAll();
-      setCarriers(response.data);
-    } catch (err) {
-      console.error('Failed to load carriers:', err);
-      // Use default carriers if API fails
-      setCarriers([
-        { id: 'ups', name: 'UPS' },
-        { id: 'usps', name: 'USPS' },
-        { id: 'fedex', name: 'FedEx' },
-        { id: 'dhl', name: 'DHL' },
-      ]);
-    }
-  };
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
