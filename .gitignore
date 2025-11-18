@@ -218,3 +218,14 @@ dist/
 dist-ssr/
 *.local
 .vite
+
+# Environment files
+.env
+backend/.env
+frontend/.env
+
+# Database
+*.db
+
+# Test database
+test.db

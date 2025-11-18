@@ -56,7 +56,7 @@ function AuthView({ onLogin }) {
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     try {
-      await authAPI.forgotPassword(formData.email);
+      await authAPI.requestPasswordReset(formData.email);
       setSuccess('Password reset email sent! Check your inbox.');
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to send reset email');
