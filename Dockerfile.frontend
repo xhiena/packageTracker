@@ -1,0 +1,20 @@
+# Use Node.js LTS version
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY frontend/package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy application code
+COPY frontend/ .
+
+# Expose port 3000 for React development server
+EXPOSE 3000
+
+# Command to run the development server
+CMD ["npm", "start"]
