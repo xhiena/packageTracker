@@ -211,6 +211,9 @@ __marimo__/
 backend/.env
 frontend/.env
 
+# Database
+*.db
+
 # Test database
 test.db
-*.db
+
