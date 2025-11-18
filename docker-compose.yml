@@ -1,7 +1,7 @@
 services:
   # PostgreSQL Database Service
   db:
-    image: postgres:latest
+    image: postgres:16-alpine
     container_name: packagetracker_db
     restart: unless-stopped
     environment:
