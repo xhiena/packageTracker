@@ -210,3 +210,7 @@ __marimo__/
 .env
 backend/.env
 frontend/.env
+
+# Test database
+test.db
+*.db
