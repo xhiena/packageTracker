@@ -1,38 +1,53 @@
-# Package Tracker API
+# Package Tracker
 
-A simple shipping package tracker built with FastAPI, PostgreSQL, and SQLAlchemy.
+A Universal Package Tracker built with FastAPI, React, and PostgreSQL. Features secure JWT user authentication (including SMTP password recovery) and modular tracking logic using a Strategy Pattern for carriers (Correos, GLS, etc.).
 
-## Features
+## 🚀 Features
 
-- **User Authentication**: JWT-based authentication to secure API endpoints
-- **Package Management**: Create, list, and track packages from multiple carriers
-- **Multi-Carrier Support**: Supports Correos, GLS, and SEUR carriers (mock implementations)
-- **Status Tracking**: Real-time package status updates from carrier APIs
+- **Secure JWT Authentication**: User registration, login, and password recovery via SMTP
+- **Multi-Carrier Support**: Extensible tracking system using Strategy Pattern
+  - Correos (Spanish Postal Service)
+  - GLS (General Logistics Systems)
+- **RESTful API**: Built with FastAPI with automatic OpenAPI documentation
+- **Modern Frontend**: React-based user interface with responsive design
+- **Dockerized**: Fully containerized application stack
+- **80%+ Test Coverage**: Comprehensive unit tests for backend
 
-## Phase 5: Package API Endpoints
+## 🏗️ Architecture
 
-This implementation includes the following endpoints:
+### Backend (FastAPI)
+- **Security**: JWT tokens, bcrypt password hashing, secure password reset flow
+- **Database**: PostgreSQL with SQLAlchemy ORM
+- **Modular Design**: Strategy Pattern for carrier-specific tracking logic
+- **API Documentation**: Auto-generated at `/docs`
 
-### POST /packages
-Add a new package for the authenticated user.
-- Requires authentication via JWT token
-- Accepts `tracking_number`, `carrier_code`, and optional `nickname`
-- Calls the Tracking Service to get initial status
-- Saves package details and initial status to the database
+### Frontend (React)
+- **Authentication**: Login, registration, password reset
+- **Dashboard**: Add, view, and track packages
+- **API Integration**: Axios-based API client
 
-### GET /packages
-List all packages for the authenticated user.
-- Requires authentication
-- Returns all packages belonging to the current user
+### Database (PostgreSQL)
+- User management
+- Package tracking storage
 
-### GET /packages/{package_id}/status
-Fetch the latest status for a specific package.
-- Requires authentication
-- Calls the Tracking Service to check the external API
-- Updates the `status_data` in the database
-- Returns both package details and current status
+## 🛠️ Technology Stack
 
-## Installation
+- **Backend**: FastAPI, SQLAlchemy, PostgreSQL, Python 3.11
+- **Frontend**: React 18, React Router, Axios
+- **Authentication**: JWT (python-jose), bcrypt (passlib)
+- **Email**: SMTP for password recovery
+- **Testing**: pytest, pytest-cov
+- **Containerization**: Docker, Docker Compose
+
+## 📦 Getting Started
+
+### Prerequisites
+
+- Docker and Docker Compose
+- (Optional) Python 3.11+ for local development
+- (Optional) Node.js 18+ for local frontend development
+
+### Quick Start with Docker
 
 1. Clone the repository:
 ```bash
@@ -40,69 +55,192 @@ git clone https://github.com/xhiena/packageTracker.git
 cd packageTracker
 ```
 
-2. Install dependencies:
+2. Create environment file:
 ```bash
+cp backend/.env.example backend/.env
+```
+
+3. Configure SMTP settings in `backend/.env` (optional, for password recovery):
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
+SMTP_FROM=your-email@gmail.com
+```
+
+4. Start the application:
+```bash
+docker-compose up -d
+```
+
+5. Access the application:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- API Documentation: http://localhost:8000/docs
+
+### Local Development
+
+#### Backend
+
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
+
+# Set up database and run
+uvicorn app.main:app --reload
 ```
 
-3. Set up environment variables:
+#### Frontend
+
 ```bash
-cp .env.example .env
-# Edit .env with your configuration
+cd frontend
+npm install
+npm start
 ```
 
-4. Run the application:
+## 🧪 Testing
+
+The backend includes comprehensive unit tests with 80%+ coverage:
+
 ```bash
-uvicorn main:app --reload --port 8000
+cd backend
+pytest
+pytest --cov=app --cov-report=html
 ```
 
-## Testing
+View coverage report in `backend/htmlcov/index.html`
 
-Run the test suite:
-```bash
-pytest tests/ -v
+## 📚 API Endpoints
+
+### Authentication
+- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/login` - Login and get JWT token
+- `POST /api/auth/password-reset-request` - Request password reset
+- `POST /api/auth/password-reset` - Reset password with token
+
+### Packages
+- `GET /api/packages/carriers` - Get supported carriers
+- `POST /api/packages/` - Add a new package
+- `GET /api/packages/` - List all user packages
+- `GET /api/packages/{id}` - Get package details
+- `PUT /api/packages/{id}` - Update package
+- `DELETE /api/packages/{id}` - Delete package
+- `GET /api/packages/{id}/track` - Get real-time tracking info
+
+## 🔧 Environment Variables
+
+### Backend Configuration
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://...` |
+| `SECRET_KEY` | JWT secret key | Change in production! |
+| `ALGORITHM` | JWT algorithm | `HS256` |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Token expiration | `30` |
+| `SMTP_HOST` | SMTP server host | `smtp.gmail.com` |
+| `SMTP_PORT` | SMTP server port | `587` |
+| `SMTP_USER` | SMTP username | - |
+| `SMTP_PASSWORD` | SMTP password | - |
+| `SMTP_FROM` | From email address | - |
+| `FRONTEND_URL` | Frontend URL for CORS | `http://localhost:3000` |
+
+## 🎯 Strategy Pattern Implementation
+
+The package tracking system uses the Strategy Pattern for extensibility:
+
+```python
+# Base strategy interface
+class TrackingStrategy(ABC):
+    @abstractmethod
+    def track(self, tracking_number: str) -> Dict[str, Any]:
+        pass
+    
+    @abstractmethod
+    def validate_tracking_number(self, tracking_number: str) -> bool:
+        pass
+
+# Carrier-specific implementations
+class CorreosStrategy(TrackingStrategy):
+    # Correos-specific tracking logic
+    pass
+
+class GLSStrategy(TrackingStrategy):
+    # GLS-specific tracking logic
+    pass
+
+# Factory to get appropriate strategy
+strategy = TrackingStrategyFactory.get_strategy("correos")
+tracking_info = strategy.track(tracking_number)
 ```
 
-## API Documentation
+## 🔐 Security Features
 
-Once the server is running, visit:
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+- **Password Hashing**: bcrypt for secure password storage
+- **JWT Tokens**: Secure authentication with expiration
+- **SMTP Password Recovery**: Secure password reset flow
+- **Input Validation**: Pydantic models for request validation
+- **CORS Configuration**: Controlled cross-origin access
+- **Environment Variables**: Sensitive data stored securely
 
-## Project Structure
+## 🚦 Development Workflow
 
+1. Make changes to code
+2. Run tests: `pytest`
+3. Check coverage: `pytest --cov=app`
+4. Build and test with Docker: `docker-compose up --build`
+5. Commit and push changes
+
+## 📝 Adding a New Carrier
+
+To add support for a new carrier:
+
+1. Create a new strategy class in `backend/app/strategies/`:
+```python
+class NewCarrierStrategy(TrackingStrategy):
+    @property
+    def carrier_name(self) -> str:
+        return "newcarrier"
+    
+    def validate_tracking_number(self, tracking_number: str) -> bool:
+        # Implement validation logic
+        pass
+    
+    def track(self, tracking_number: str) -> Dict[str, Any]:
+        # Implement tracking logic
+        pass
 ```
-packageTracker/
-├── app/
-│   ├── auth/              # Authentication utilities and schemas
-│   │   ├── security.py    # JWT and password hashing
-│   │   └── schemas.py     # Auth-related Pydantic models
-│   ├── db/                # Database configuration
-│   │   └── database.py    # SQLAlchemy setup
-│   ├── models/            # Database models
-│   │   ├── user.py        # User model
-│   │   └── package.py     # Package model
-│   ├── package/           # Package endpoints (Phase 5)
-│   │   ├── router.py      # Package API endpoints
-│   │   └── schemas.py     # Package-related Pydantic models
-│   └── tracking/          # Tracking service (Phase 4)
-│       ├── interface.py   # CarrierTracker interface
-│       ├── service.py     # Tracking service layer
-│       └── carriers/      # Carrier implementations
-│           ├── correos.py # Correos tracker
-│           ├── gls.py     # GLS tracker
-│           └── seur.py    # SEUR tracker
-├── tests/                 # Test suite
-│   └── test_package_api.py
-├── main.py                # FastAPI application entry point
-├── requirements.txt       # Python dependencies
-└── README.md             # This file
+
+2. Register it in the factory (`backend/app/strategies/factory.py`):
+```python
+_strategies = {
+    "correos": CorreosStrategy,
+    "gls": GLSStrategy,
+    "newcarrier": NewCarrierStrategy,  # Add here
+}
 ```
 
-## Supported Carriers
+3. Add tests in `backend/app/tests/test_strategies.py`
 
-- **CORREOS**: Spanish postal service
-- **GLS**: General Logistics Systems
-- **SEUR**: Spanish courier service
+## 🤝 Contributing
 
-Note: Current implementations are mocked for demonstration purposes.
+Contributions are welcome! Please ensure:
+- Tests pass and coverage remains above 80%
+- Code follows existing patterns
+- New carriers use the Strategy Pattern
+
+## 📄 License
+
+This project is open source and available under the MIT License.
+
+## 👥 Authors
+
+- xhiena
+
+## 🙏 Acknowledgments
+
+- FastAPI for the excellent web framework
+- React for the frontend library
+- PostgreSQL for reliable data storage
