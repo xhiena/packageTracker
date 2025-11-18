@@ -1,85 +1,59 @@
 services:
-  # PostgreSQL Database Service
   db:
     image: postgres:16-alpine
     container_name: packagetracker_db
-    restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: packagetracker
+      POSTGRES_USER: packagetracker
+      POSTGRES_PASSWORD: packagetracker
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - packagetracker_network
+    ports:
+      - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U packagetracker"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # FastAPI Backend Service
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.backend
+    build: ./backend
     container_name: packagetracker_backend
-    restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_HOST: db
-      POSTGRES_PORT: 5432
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      SMTP_SERVER: ${SMTP_SERVER}
-      SMTP_PORT: ${SMTP_PORT}
-      SMTP_USER: ${SMTP_USER}
-      SMTP_PASSWORD: ${SMTP_PASSWORD}
-      EMAIL_FROM: ${EMAIL_FROM}
-      FRONTEND_URL: ${FRONTEND_URL}
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_ALGORITHM: ${JWT_ALGORITHM}
-      JWT_EXPIRATION_MINUTES: ${JWT_EXPIRATION_MINUTES}
-    volumes:
-      - ./backend:/app
+      DATABASE_URL: postgresql://packagetracker:packagetracker@db:5432/packagetracker
+      SECRET_KEY: ${SECRET_KEY:-your-secret-key-here-change-in-production}
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      APP_NAME: Package Tracker
+      FRONTEND_URL: http://localhost:3000
     depends_on:
       db:
         condition: service_healthy
-    networks:
-      - packagetracker_network
+    volumes:
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
-  # React Frontend Service
   frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
+    build: ./frontend
     container_name: packagetracker_frontend
-    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
       REACT_APP_API_URL: http://localhost:8000
+    depends_on:
+      - backend
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    depends_on:
-      - backend
-    networks:
-      - packagetracker_network
     stdin_open: true
     tty: true
 
-# Named volumes for persistent data
 volumes:
   postgres_data:
-    driver: local
-
-# Custom network for inter-service communication
-networks:
-  packagetracker_network:
-    driver: bridge
