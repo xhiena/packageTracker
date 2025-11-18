@@ -1,21 +1,27 @@
 """Main FastAPI application entry point."""
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.db.database import Base
-from app.models import user, package
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifespan events."""
+    # Startup: Create database tables
+    from app.db.database import engine
+    from app.models import user, package
+    Base.metadata.create_all(bind=engine)
+    yield
+    # Shutdown (if needed in future)
+
 
 # Initialize FastAPI app
 app = FastAPI(
     title="Package Tracker API",
     description="API for tracking shipping packages from various carriers",
-    version="0.1.0"
+    version="0.1.0",
+    lifespan=lifespan
 )
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Create database tables on application startup."""
-    from app.db.database import engine
-    Base.metadata.create_all(bind=engine)
 
 
 @app.get("/")
