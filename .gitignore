@@ -206,11 +206,12 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
+# Environment files
+backend/.env
+frontend/.env
+
+# Database
+*.db
+
 # Test database
 test.db
-
-# Coverage reports
-htmlcov/
-.coverage
-coverage.xml
-.pytest_cache/
