@@ -121,6 +121,15 @@ function Dashboard({ onLogout }) {
                 <div
                   key={pkg.id}
                   onClick={() => handlePackageClick(pkg.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handlePackageClick(pkg.id);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`View details for ${pkg.description || 'package'}`}
                   className="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow cursor-pointer"
                 >
                   <div className="p-6">
@@ -135,6 +144,7 @@ function Dashboard({ onLogout }) {
                         }}
                         className="text-red-600 hover:text-red-800 focus:outline-none"
                         title="Delete package"
+                        aria-label={`Delete ${pkg.description || 'package'}`}
                       >
                         <svg
                           className="h-5 w-5"

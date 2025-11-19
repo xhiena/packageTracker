@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { packagesAPI } from '../services/api';
 
@@ -32,6 +32,13 @@ function PackageDetail() {
 
     fetchPackageDetails();
   }, [id]);
+
+  // Sort history in reverse chronological order (newest first)
+  const sortedHistory = useMemo(() => 
+    trackingInfo?.history 
+      ? [...trackingInfo.history].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+      : []
+  , [trackingInfo?.history]);
 
   const handleBack = () => {
     navigate('/dashboard');
@@ -70,11 +77,6 @@ function PackageDetail() {
     );
   }
 
-  // Sort history in reverse chronological order (newest first)
-  const sortedHistory = trackingInfo?.history 
-    ? [...trackingInfo.history].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-    : [];
-
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
@@ -84,6 +86,7 @@ function PackageDetail() {
             onClick={handleBack}
             className="mr-4 p-2 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             title="Back to Dashboard"
+            aria-label="Back to Dashboard"
           >
             <svg className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -153,8 +156,8 @@ function PackageDetail() {
                 
                 {/* Timeline events */}
                 <div className="space-y-6">
-                  {sortedHistory.map((event, index) => (
-                    <div key={index} className="relative flex items-start">
+                  {sortedHistory.map((event) => (
+                    <div key={`${event.timestamp}-${event.status}-${event.location || ''}`} className="relative flex items-start">
                       {/* Timeline dot */}
                       <div className="absolute left-8 -translate-x-1/2 w-4 h-4 rounded-full bg-blue-600 border-4 border-white shadow"></div>
                       
