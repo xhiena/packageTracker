@@ -34,7 +34,7 @@ A Universal Package Tracker built with FastAPI, React, and PostgreSQL. Features 
 ## 🛠️ Technology Stack
 
 - **Backend**: FastAPI, SQLAlchemy, PostgreSQL, Python 3.11
-- **Frontend**: React 18, React Router, Axios
+- **Frontend**: React 18, Vite, Tailwind CSS, Axios
 - **Authentication**: JWT (python-jose), bcrypt (passlib)
 - **Email**: SMTP for password recovery
 - **Testing**: pytest, pytest-cov
@@ -76,7 +76,7 @@ docker-compose up -d
 ```
 
 5. Access the application:
-- Frontend: http://localhost:3000
+- Frontend: http://localhost:5173 (development) or http://localhost:3000 (Docker)
 - Backend API: http://localhost:8000
 - API Documentation: http://localhost:8000/docs
 
@@ -99,7 +99,7 @@ uvicorn app.main:app --reload
 ```bash
 cd frontend
 npm install
-npm start
+npm run dev  # Development server at http://localhost:5173
 ```
 
 ## 🧪 Testing
