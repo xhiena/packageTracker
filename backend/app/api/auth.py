@@ -5,7 +5,7 @@ from datetime import timedelta
 from app.db.database import get_db
 from app.models.user import User
 from app.api.schemas import UserCreate, UserResponse, Token, PasswordResetRequest, PasswordReset
-from app.core.security import get_password_hash, verify_password, create_access_token
+from app.core.security import get_password_hash, verify_password, create_access_token, decode_access_token
 from app.core.config import settings
 from app.services.email import EmailService
 
