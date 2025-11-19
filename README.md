@@ -245,3 +245,4 @@ This project is open source and available under the MIT License.
 - FastAPI for the excellent web framework
 - React for the frontend library
 - PostgreSQL for reliable data storage
+
