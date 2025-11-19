@@ -2,6 +2,7 @@
 import pytest
 from app.strategies.correos import CorreosStrategy
 from app.strategies.gls import GLSStrategy
+from app.strategies.seur import SEURStrategy
 from app.strategies.factory import TrackingStrategyFactory
 
 
@@ -13,6 +14,7 @@ class TestStrategyDataConsistency:
         strategies = [
             CorreosStrategy(),
             GLSStrategy(),
+            SEURStrategy(),
         ]
         
         required_keys = {"status", "location", "history", "error"}
@@ -23,6 +25,8 @@ class TestStrategyDataConsistency:
                 result = strategy.track("AB123456789ES")
             elif strategy.carrier_name == "gls":
                 result = strategy.track("12345678901")
+            elif strategy.carrier_name == "seur":
+                result = strategy.track("1234567890")
             else:
                 continue
             
@@ -34,6 +38,7 @@ class TestStrategyDataConsistency:
         strategies = [
             (CorreosStrategy(), "AB123456789ES"),
             (GLSStrategy(), "12345678901"),
+            (SEURStrategy(), "1234567890"),
         ]
         
         for strategy, tracking_number in strategies:
@@ -58,6 +63,7 @@ class TestStrategyDataConsistency:
         strategies = [
             CorreosStrategy(),
             GLSStrategy(),
+            SEURStrategy(),
         ]
         
         for strategy in strategies:
@@ -77,11 +83,14 @@ class TestFactoryPatternIntegration:
         """Test that factory returns correct strategy instances."""
         correos = TrackingStrategyFactory.get_strategy("correos")
         gls = TrackingStrategyFactory.get_strategy("gls")
+        seur = TrackingStrategyFactory.get_strategy("seur")
         
         assert type(correos).__name__ == "CorreosStrategy"
         assert type(gls).__name__ == "GLSStrategy"
+        assert type(seur).__name__ == "SEURStrategy"
         assert correos.carrier_name == "correos"
         assert gls.carrier_name == "gls"
+        assert seur.carrier_name == "seur"
     
     def test_factory_caching_behavior(self):
         """Test that factory returns same instance or new instance as expected."""
@@ -164,11 +173,23 @@ class TestMockDataQuality:
         if result["history"]:
             assert len(result["history"]) > 0
     
+    def test_seur_mock_data_completeness(self):
+        """Test that SEUR returns complete mock data."""
+        strategy = SEURStrategy()
+        result = strategy.track("1234567890")
+        
+        assert result["status"] is not None
+        assert result["status"] != ""
+        assert result["location"] is not None
+        if result["history"]:
+            assert len(result["history"]) > 0
+    
     def test_mock_data_includes_reasonable_status(self):
         """Test that mock data includes reasonable status values."""
         strategies = [
             (CorreosStrategy(), "AB123456789ES"),
             (GLSStrategy(), "12345678901"),
+            (SEURStrategy(), "1234567890"),
         ]
         
         valid_statuses = {

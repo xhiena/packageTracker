@@ -204,7 +204,7 @@ function Dashboard() {
                       {trackingData[pkg.id].error}
                     </div>
                   ) : (
-                    trackingData[pkg.id].history.map((event, index) => (
+                    trackingData[pkg.id].history && Array.isArray(trackingData[pkg.id].history) && trackingData[pkg.id].history.map((event, index) => (
                       <div key={index} className="tracking-event">
                         <div className="tracking-event-time">
                           {new Date(event.timestamp).toLocaleString()}
