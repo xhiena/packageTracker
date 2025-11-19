@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { packagesAPI } from '../services/api';
 import AddPackageModal from '../components/AddPackageModal';
 
 function Dashboard({ onLogout }) {
+  const navigate = useNavigate();
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -40,6 +42,10 @@ function Dashboard({ onLogout }) {
   const handleAddPackage = () => {
     setShowAddModal(false);
     fetchPackages();
+  };
+
+  const handlePackageClick = (id) => {
+    navigate(`/package/${id}`);
   };
 
   return (
@@ -114,7 +120,17 @@ function Dashboard({ onLogout }) {
               {packages.map((pkg) => (
                 <div
                   key={pkg.id}
-                  className="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow"
+                  onClick={() => handlePackageClick(pkg.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handlePackageClick(pkg.id);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`View details for ${pkg.description || 'package'}`}
+                  className="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow cursor-pointer"
                 >
                   <div className="p-6">
                     <div className="flex items-center justify-between mb-4">
@@ -122,9 +138,13 @@ function Dashboard({ onLogout }) {
                         {pkg.description || 'Unnamed Package'}
                       </h3>
                       <button
-                        onClick={() => handleDeletePackage(pkg.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeletePackage(pkg.id);
+                        }}
                         className="text-red-600 hover:text-red-800 focus:outline-none"
                         title="Delete package"
+                        aria-label={`Delete ${pkg.description || 'package'}`}
                       >
                         <svg
                           className="h-5 w-5"
