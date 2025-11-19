@@ -66,3 +66,14 @@ def auth_token(client, test_user):
         data={"username": "testuser", "password": "testpassword123"}
     )
     return response.json()["access_token"]
+
+
+@pytest.fixture
+def authenticated_client(client, auth_token):
+    """Create an authenticated test client with authorization header."""
+    original_headers = client.headers.copy()
+    client.headers.update({"Authorization": f"Bearer {auth_token}"})
+    try:
+        yield client
+    finally:
+        client.headers = original_headers
