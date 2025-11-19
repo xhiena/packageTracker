@@ -15,15 +15,19 @@ function AddPackageModal({ onClose, onSuccess }) {
     const fetchCarriers = async () => {
       try {
         const response = await carriersAPI.getAll();
-        setCarriers(response.data);
+        // Transform carrier strings to objects with id and name
+        const carrierList = response.data.carriers.map(carrier => ({
+          id: carrier,
+          name: carrier.toUpperCase()
+        }));
+        setCarriers(carrierList);
       } catch (err) {
         console.error('Failed to load carriers:', err);
         // Use default carriers if API fails
         setCarriers([
-          { id: 'ups', name: 'UPS' },
-          { id: 'usps', name: 'USPS' },
-          { id: 'fedex', name: 'FedEx' },
-          { id: 'dhl', name: 'DHL' },
+          { id: 'correos', name: 'CORREOS' },
+          { id: 'gls', name: 'GLS' },
+          { id: 'seur', name: 'SEUR' },
         ]);
       }
     };
@@ -51,7 +55,13 @@ function AddPackageModal({ onClose, onSuccess }) {
 
     try {
       setLoading(true);
-      await packagesAPI.add(formData);
+      // Map nickname to description for backend
+      const packageData = {
+        tracking_number: formData.tracking_number,
+        carrier: formData.carrier,
+        description: formData.nickname || null
+      };
+      await packagesAPI.add(packageData);
       onSuccess();
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to add package');

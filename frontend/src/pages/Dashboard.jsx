@@ -119,7 +119,7 @@ function Dashboard({ onLogout }) {
                   <div className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-semibold text-gray-900 truncate">
-                        {pkg.nickname || 'Unnamed Package'}
+                        {pkg.description || 'Unnamed Package'}
                       </h3>
                       <button
                         onClick={() => handleDeletePackage(pkg.id)}
@@ -150,21 +150,28 @@ function Dashboard({ onLogout }) {
                       
                       <div>
                         <p className="text-xs font-medium text-gray-500">Carrier</p>
-                        <p className="text-sm text-gray-900">{pkg.carrier || 'Unknown'}</p>
+                        <p className="text-sm text-gray-900 uppercase">{pkg.carrier || 'Unknown'}</p>
                       </div>
                       
-                      {pkg.latest_status && (
+                      {pkg.status && (
                         <div>
-                          <p className="text-xs font-medium text-gray-500">Latest Status</p>
-                          <p className="text-sm text-gray-900">{pkg.latest_status}</p>
+                          <p className="text-xs font-medium text-gray-500">Status</p>
+                          <p className="text-sm text-gray-900">{pkg.status}</p>
                         </div>
                       )}
                       
-                      {pkg.last_updated && (
+                      {pkg.last_location && (
+                        <div>
+                          <p className="text-xs font-medium text-gray-500">Location</p>
+                          <p className="text-sm text-gray-900">{pkg.last_location}</p>
+                        </div>
+                      )}
+                      
+                      {pkg.updated_at && (
                         <div>
                           <p className="text-xs font-medium text-gray-500">Last Updated</p>
                           <p className="text-sm text-gray-900">
-                            {new Date(pkg.last_updated).toLocaleString()}
+                            {new Date(pkg.updated_at).toLocaleString()}
                           </p>
                         </div>
                       )}
