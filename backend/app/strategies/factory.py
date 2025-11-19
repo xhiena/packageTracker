@@ -2,6 +2,7 @@ from typing import Dict, Type
 from app.strategies.base import TrackingStrategy
 from app.strategies.correos import CorreosStrategy
 from app.strategies.gls import GLSStrategy
+from app.strategies.seur import SEURStrategy
 
 
 class TrackingStrategyFactory:
@@ -13,6 +14,7 @@ class TrackingStrategyFactory:
     _strategies: Dict[str, Type[TrackingStrategy]] = {
         "correos": CorreosStrategy,
         "gls": GLSStrategy,
+        "seur": SEURStrategy,
     }
     
     @classmethod
