@@ -1,6 +1,7 @@
 import pytest
 from app.strategies.correos import CorreosStrategy
 from app.strategies.gls import GLSStrategy
+from app.strategies.seur import SEURStrategy
 from app.strategies.factory import TrackingStrategyFactory
 
 
@@ -87,6 +88,48 @@ class TestGLSStrategy:
         assert result["status"] == "error"
 
 
+class TestSEURStrategy:
+    """Test SEUR tracking strategy."""
+    
+    def test_carrier_name(self):
+        """Test carrier name property."""
+        strategy = SEURStrategy()
+        assert strategy.carrier_name == "seur"
+    
+    def test_validate_tracking_number_valid(self):
+        """Test validation with valid tracking number."""
+        strategy = SEURStrategy()
+        assert strategy.validate_tracking_number("1234567890") is True
+        assert strategy.validate_tracking_number("12345678901") is True
+        assert strategy.validate_tracking_number("123456789012") is True
+    
+    def test_validate_tracking_number_invalid(self):
+        """Test validation with invalid tracking number."""
+        strategy = SEURStrategy()
+        assert strategy.validate_tracking_number("123456789") is False  # Too short
+        assert strategy.validate_tracking_number("1234567890123") is False  # Too long
+        assert strategy.validate_tracking_number("123456789A") is False  # Contains letter
+    
+    def test_track_valid_number(self):
+        """Test tracking with valid number."""
+        strategy = SEURStrategy()
+        result = strategy.track("1234567890")
+        
+        assert result["error"] is None
+        assert "status" in result
+        assert "location" in result
+        assert "history" in result
+        assert isinstance(result["history"], list)
+    
+    def test_track_invalid_number(self):
+        """Test tracking with invalid number."""
+        strategy = SEURStrategy()
+        result = strategy.track("invalid")
+        
+        assert result["error"] is not None
+        assert result["status"] == "error"
+
+
 class TestTrackingStrategyFactory:
     """Test the tracking strategy factory."""
     
@@ -96,6 +139,7 @@ class TestTrackingStrategyFactory:
         assert isinstance(carriers, list)
         assert "correos" in carriers
         assert "gls" in carriers
+        assert "seur" in carriers
     
     def test_get_strategy_correos(self):
         """Test getting Correos strategy."""
@@ -108,6 +152,12 @@ class TestTrackingStrategyFactory:
         strategy = TrackingStrategyFactory.get_strategy("gls")
         assert isinstance(strategy, GLSStrategy)
         assert strategy.carrier_name == "gls"
+    
+    def test_get_strategy_seur(self):
+        """Test getting SEUR strategy."""
+        strategy = TrackingStrategyFactory.get_strategy("seur")
+        assert isinstance(strategy, SEURStrategy)
+        assert strategy.carrier_name == "seur"
     
     def test_get_strategy_case_insensitive(self):
         """Test that carrier names are case-insensitive."""

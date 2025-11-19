@@ -8,6 +8,7 @@ A Universal Package Tracker built with FastAPI, React, and PostgreSQL. Features 
 - **Multi-Carrier Support**: Extensible tracking system using Strategy Pattern
   - Correos (Spanish Postal Service)
   - GLS (General Logistics Systems)
+  - SEUR (Spanish courier service)
 - **RESTful API**: Built with FastAPI with automatic OpenAPI documentation
 - **Modern Frontend**: React-based user interface with responsive design
 - **Dockerized**: Fully containerized application stack
@@ -244,3 +245,4 @@ This project is open source and available under the MIT License.
 - FastAPI for the excellent web framework
 - React for the frontend library
 - PostgreSQL for reliable data storage
+
