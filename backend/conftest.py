@@ -70,9 +70,10 @@ def auth_token(client, test_user):
 
 @pytest.fixture
 def authenticated_client(client, auth_token):
-    """Create an authenticated test client."""
-    client.headers = {
-        **client.headers,
-        "Authorization": f"Bearer {auth_token}"
-    }
-    return client
+    """Create an authenticated test client with authorization header."""
+    original_headers = client.headers.copy()
+    client.headers.update({"Authorization": f"Bearer {auth_token}"})
+    try:
+        yield client
+    finally:
+        client.headers = original_headers

@@ -1,5 +1,4 @@
 """Comprehensive strategy tests for data structure consistency."""
-import pytest
 from app.strategies.correos import CorreosStrategy
 from app.strategies.gls import GLSStrategy
 from app.strategies.seur import SEURStrategy
@@ -92,8 +91,8 @@ class TestFactoryPatternIntegration:
         assert gls.carrier_name == "gls"
         assert seur.carrier_name == "seur"
     
-    def test_factory_caching_behavior(self):
-        """Test that factory returns same instance or new instance as expected."""
+    def test_factory_returns_consistent_types(self):
+        """Test that factory returns consistent types for the same carrier."""
         strategy1 = TrackingStrategyFactory.get_strategy("correos")
         strategy2 = TrackingStrategyFactory.get_strategy("correos")
         
@@ -128,7 +127,6 @@ class TestTrackingNumberValidation:
         assert not strategy.validate_tracking_number("AB1234567890ES")  # Too long
         assert not strategy.validate_tracking_number("A1123456789ES")  # Number in letters
         assert not strategy.validate_tracking_number("AB12345678XES")  # Letter in numbers
-        # Note: Lowercase may be accepted by the actual implementation
     
     def test_gls_validation_edge_cases(self):
         """Test GLS validation with edge cases."""
@@ -146,6 +144,22 @@ class TestTrackingNumberValidation:
         assert not strategy.validate_tracking_number("1234567890A")  # Contains letter
         assert not strategy.validate_tracking_number(" 12345678901")  # Leading space
         assert not strategy.validate_tracking_number("12345678901 ")  # Trailing space
+    
+    def test_seur_validation_edge_cases(self):
+        """Test SEUR validation with edge cases."""
+        strategy = SEURStrategy()
+        
+        # Valid cases (10-12 digits)
+        assert strategy.validate_tracking_number("1234567890")  # 10 digits
+        assert strategy.validate_tracking_number("12345678901")  # 11 digits
+        assert strategy.validate_tracking_number("123456789012")  # 12 digits
+        
+        # Invalid cases
+        assert not strategy.validate_tracking_number("")
+        assert not strategy.validate_tracking_number("123456789")  # Too short
+        assert not strategy.validate_tracking_number("1234567890123")  # Too long
+        assert not strategy.validate_tracking_number("123456789A")  # Contains letter
+        assert not strategy.validate_tracking_number(" 1234567890")  # Leading space
 
 
 class TestMockDataQuality:
@@ -192,14 +206,9 @@ class TestMockDataQuality:
             (SEURStrategy(), "1234567890"),
         ]
         
-        valid_statuses = {
-            "pending", "in_transit", "delivered", "failed", 
-            "out_for_delivery", "processing", "unknown"
-        }
-        
         for strategy, tracking_number in strategies:
             result = strategy.track(tracking_number)
             if result["error"] is None:
-                # Status should be a reasonable value (not necessarily from our set)
+                # Status should be a reasonable value (non-empty string)
                 assert isinstance(result["status"], str)
                 assert len(result["status"]) > 0

@@ -1,5 +1,4 @@
 """Comprehensive authentication tests including email mocking and protected routes."""
-import pytest
 from unittest.mock import patch, MagicMock
 from fastapi import status
 
@@ -73,30 +72,17 @@ class TestEmailUtility:
         )
         
         assert response.status_code == status.HTTP_200_OK
+        assert "message" in response.json()
         
         # Note: Email sending is mocked, so we just verify the endpoint works
         # In a real scenario with proper dependency injection, we'd verify the mock was called
-    
-    @patch('smtplib.SMTP')
-    def test_email_service_integration(self, mock_smtp, client, test_user):
-        """Test that password reset request returns success."""
-        mock_server = MagicMock()
-        mock_smtp.return_value.__enter__.return_value = mock_server
-        
-        response = client.post(
-            "/api/auth/password-reset-request",
-            json={"email": "test@example.com"}
-        )
-        
-        assert response.status_code == status.HTTP_200_OK
-        assert "message" in response.json()
 
 
 class TestPasswordReset:
     """Test password reset flow."""
     
     @patch('smtplib.SMTP')
-    def test_password_reset_request_flow(self, mock_smtp, client, db, test_user):
+    def test_password_reset_request_flow(self, mock_smtp, client, test_user):
         """Test password reset request flow."""
         mock_server = MagicMock()
         mock_smtp.return_value.__enter__.return_value = mock_server
