@@ -106,15 +106,15 @@ function AuthView({ onLogin }) {
             <div className="rounded-md shadow-sm space-y-4">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  Email
+                  Username or Email
                 </label>
                 <input
                   id="email"
                   name="email"
-                  type="email"
+                  type="text"
                   required
                   className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="Email address"
+                  placeholder="Username or Email"
                   value={formData.email}
                   onChange={handleInputChange}
                 />

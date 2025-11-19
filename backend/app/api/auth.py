@@ -48,8 +48,10 @@ def login(
     db: Session = Depends(get_db)
 ):
     """Login and get an access token."""
-    # Find user
-    user = db.query(User).filter(User.username == form_data.username).first()
+    # Find user by username or email
+    user = db.query(User).filter(
+        (User.username == form_data.username) | (User.email == form_data.username)
+    ).first()
     
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
