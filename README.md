@@ -1,14 +1,13 @@
 # Package Tracker
 
-A Universal Package Tracker built with FastAPI, React, and PostgreSQL. Features secure JWT user authentication (including SMTP password recovery) and modular tracking logic using a Strategy Pattern for carriers (Correos, GLS, etc.).
+A Universal Package Tracker built with FastAPI, React, and PostgreSQL. Features secure JWT user authentication (including SMTP password recovery) and tracking for multiple carriers via KeyDelivery API.
 
 ## 🚀 Features
 
 - **Secure JWT Authentication**: User registration, login, and password recovery via SMTP
-- **Multi-Carrier Support**: Extensible tracking system using Strategy Pattern
-  - Correos (Spanish Postal Service)
-  - GLS (General Logistics Systems)
-  - SEUR (Spanish courier service)
+- **Multi-Carrier Support**: Unified tracking via KeyDelivery API
+  - Supports 20+ carriers including DHL, UPS, FedEx, Correos, GLS, SEUR, and more
+  - Automatic carrier detection
 - **RESTful API**: Built with FastAPI with automatic OpenAPI documentation
 - **Modern Frontend**: React-based user interface with responsive design
 - **Dockerized**: Fully containerized application stack
@@ -19,7 +18,7 @@ A Universal Package Tracker built with FastAPI, React, and PostgreSQL. Features 
 ### Backend (FastAPI)
 - **Security**: JWT tokens, bcrypt password hashing, secure password reset flow
 - **Database**: PostgreSQL with SQLAlchemy ORM
-- **Modular Design**: Strategy Pattern for carrier-specific tracking logic
+- **Tracking Service**: KeyDelivery API integration for universal carrier tracking
 - **API Documentation**: Auto-generated at `/docs`
 
 ### Frontend (React)
@@ -148,34 +147,27 @@ View coverage report in `backend/htmlcov/index.html`
 | `SMTP_FROM` | From email address | - |
 | `FRONTEND_URL` | Frontend URL for CORS | `http://localhost:3000` |
 
-## 🎯 Strategy Pattern Implementation
+## 🎯 KeyDelivery Integration
 
-The package tracking system uses the Strategy Pattern for extensibility:
+The package tracking system uses KeyDelivery API for universal carrier support:
 
 ```python
-# Base strategy interface
-class TrackingStrategy(ABC):
-    @abstractmethod
-    def track(self, tracking_number: str) -> Dict[str, Any]:
-        pass
-    
-    @abstractmethod
-    def validate_tracking_number(self, tracking_number: str) -> bool:
-        pass
+from app.strategies import keydelivery
 
-# Carrier-specific implementations
-class CorreosStrategy(TrackingStrategy):
-    # Correos-specific tracking logic
-    pass
+# Detect carrier from tracking number
+carriers = keydelivery.detect_carrier(tracking_number)
 
-class GLSStrategy(TrackingStrategy):
-    # GLS-specific tracking logic
-    pass
-
-# Factory to get appropriate strategy
-strategy = TrackingStrategyFactory.get_strategy("correos")
-tracking_info = strategy.track(tracking_number)
+# Track package with specific carrier
+tracking_info = keydelivery.track(tracking_number, carrier_code)
 ```
+
+### Supported Carriers
+
+The system supports 20+ carriers through KeyDelivery:
+- **International**: DHL, UPS, FedEx, USPS, TNT, Aramex
+- **European**: Correos, GLS, SEUR, Deutsche Post DHL, Royal Mail
+- **Asian**: China Post, SF Express, Japan Post, Singapore Post
+- And many more!
 
 ## 🔐 Security Features
 
@@ -196,41 +188,28 @@ tracking_info = strategy.track(tracking_number)
 
 ## 📝 Adding a New Carrier
 
-To add support for a new carrier:
+All carriers supported by KeyDelivery are automatically available. To add a new carrier to the system:
 
-1. Create a new strategy class in `backend/app/strategies/`:
+1. Add the carrier to `backend/app/data/carriers.py`:
 ```python
-class NewCarrierStrategy(TrackingStrategy):
-    @property
-    def carrier_name(self) -> str:
-        return "newcarrier"
-    
-    def validate_tracking_number(self, tracking_number: str) -> bool:
-        # Implement validation logic
-        pass
-    
-    def track(self, tracking_number: str) -> Dict[str, Any]:
-        # Implement tracking logic
-        pass
+CARRIERS = [
+    ("dhl", "DHL"),
+    ("ups", "UPS"),
+    ("new_carrier", "New Carrier Name"),  # Add here
+    # ... other carriers
+]
 ```
 
-2. Register it in the factory (`backend/app/strategies/factory.py`):
-```python
-_strategies = {
-    "correos": CorreosStrategy,
-    "gls": GLSStrategy,
-    "newcarrier": NewCarrierStrategy,  # Add here
-}
-```
+2. The carrier will automatically be available in the API and frontend
 
-3. Add tests in `backend/app/tests/test_strategies.py`
+No code changes needed - KeyDelivery handles all tracking logic!
 
 ## 🤝 Contributing
 
 Contributions are welcome! Please ensure:
 - Tests pass and coverage remains above 80%
 - Code follows existing patterns
-- New carriers use the Strategy Pattern
+- New features are properly documented
 
 ## 📄 License
 

@@ -1,39 +1,13 @@
-import { useState, useEffect } from 'react';
-import { packagesAPI, carriersAPI } from '../services/api';
+import { useState } from 'react';
+import { packagesAPI } from '../services/api';
 
 function AddPackageModal({ onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     tracking_number: '',
-    carrier: '',
     nickname: '',
   });
-  const [carriers, setCarriers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    const fetchCarriers = async () => {
-      try {
-        const response = await carriersAPI.getAll();
-        // Transform carrier strings to objects with id and name
-        const carrierList = response.data.carriers.map(carrier => ({
-          id: carrier,
-          name: carrier.toUpperCase()
-        }));
-        setCarriers(carrierList);
-      } catch (err) {
-        console.error('Failed to load carriers:', err);
-        // Use default carriers if API fails
-        setCarriers([
-          { id: 'correos', name: 'CORREOS' },
-          { id: 'gls', name: 'GLS' },
-          { id: 'seur', name: 'SEUR' },
-        ]);
-      }
-    };
-    
-    fetchCarriers();
-  }, []);
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -42,14 +16,9 @@ function AddPackageModal({ onClose, onSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.tracking_number.trim()) {
       setError('Please enter a tracking number');
-      return;
-    }
-    
-    if (!formData.carrier) {
-      setError('Please select a carrier');
       return;
     }
 
@@ -58,8 +27,8 @@ function AddPackageModal({ onClose, onSuccess }) {
       // Map nickname to description for backend
       const packageData = {
         tracking_number: formData.tracking_number,
-        carrier: formData.carrier,
         description: formData.nickname || null
+        // Carrier is omitted, backend defaults to "auto"
       };
       await packagesAPI.add(packageData);
       onSuccess();
@@ -73,8 +42,8 @@ function AddPackageModal({ onClose, onSuccess }) {
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         {/* Background overlay */}
-        <div 
-          className="fixed inset-0 transition-opacity" 
+        <div
+          className="fixed inset-0 transition-opacity"
           aria-hidden="true"
           onClick={onClose}
         >
@@ -94,7 +63,7 @@ function AddPackageModal({ onClose, onSuccess }) {
                   <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
                     Add New Package
                   </h3>
-                  
+
                   {error && (
                     <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
                       {error}
@@ -131,27 +100,7 @@ function AddPackageModal({ onClose, onSuccess }) {
                         value={formData.tracking_number}
                         onChange={handleInputChange}
                       />
-                    </div>
-
-                    <div>
-                      <label htmlFor="carrier" className="block text-sm font-medium text-gray-700">
-                        Carrier <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        name="carrier"
-                        id="carrier"
-                        required
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        value={formData.carrier}
-                        onChange={handleInputChange}
-                      >
-                        <option value="">Select a carrier</option>
-                        {carriers.map((carrier) => (
-                          <option key={carrier.id || carrier.name} value={carrier.id || carrier.name.toLowerCase()}>
-                            {carrier.name}
-                          </option>
-                        ))}
-                      </select>
+                      <p className="mt-1 text-xs text-gray-500">Carrier will be automatically detected.</p>
                     </div>
                   </div>
                 </div>

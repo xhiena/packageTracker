@@ -36,41 +36,43 @@ backend/
 ├── app/
 │   ├── api/           # API endpoints and routing
 │   ├── core/          # Core configuration and security
+│   ├── data/          # Static data (supported carriers)
 │   ├── db/            # Database connection and session management
 │   ├── models/        # SQLAlchemy database models
 │   ├── services/      # Business logic services
-│   ├── strategies/    # Strategy Pattern implementation for carriers
+│   ├── strategies/    # KeyDelivery API integration
 │   └── tests/         # Unit and integration tests
 ```
 
 ### Design Patterns
 
-#### 1. Strategy Pattern (Carrier Tracking)
+#### 1. KeyDelivery API Integration
 
-The application uses the Strategy Pattern to handle different carrier tracking implementations:
+The application uses KeyDelivery API for universal carrier tracking:
 
 ```python
-# Base Strategy Interface
-TrackingStrategy (ABC)
-├── track(tracking_number) -> Dict
+# KeyDelivery Service Module
+keydelivery
+├── detect_carrier(tracking_number) -> List[Dict]
 ├── validate_tracking_number(tracking_number) -> bool
-└── carrier_name -> str
+└── track(tracking_number, carrier_code) -> Dict
 
-# Concrete Implementations
-├── CorreosStrategy
-├── GLSStrategy
-└── [New Carrier Strategy]
-
-# Factory
-TrackingStrategyFactory
-└── get_strategy(carrier) -> TrackingStrategy
+# Supported Carriers
+CARRIERS = [
+    ("dhl", "DHL"),
+    ("ups", "UPS"),
+    ("fedex", "FedEx"),
+    ("correos", "Correos"),
+    ("gls", "GLS"),
+    # ... 20+ carriers total
+]
 ```
 
 **Benefits:**
-- Easy to add new carriers without modifying existing code
-- Each carrier's logic is encapsulated
-- Testable in isolation
-- Follows Open/Closed Principle
+- Single API for all carriers - no need to implement tracking logic per carrier
+- Automatic carrier detection
+- Consistent response format across all carriers
+- Easy to add new carriers - just update the CARRIERS list
 
 #### 2. Repository Pattern (Implicit)
 
@@ -246,10 +248,11 @@ CREATE TABLE packages (
 
 ```
 backend/app/tests/
-├── test_auth.py           # Authentication endpoint tests
-├── test_packages.py       # Package management endpoint tests
-├── test_security.py       # Security utilities tests
-└── test_strategies.py     # Strategy pattern implementation tests
+├── test_auth.py                   # Authentication endpoint tests
+├── test_packages.py               # Package management endpoint tests
+├── test_security.py               # Security utilities tests
+├── test_strategies.py             # KeyDelivery service tests
+└── test_keydelivery_manual.py    # Manual KeyDelivery integration tests
 ```
 
 ### Test Database
@@ -279,10 +282,15 @@ services:
 
 ### Adding a New Carrier
 
-1. Create new strategy class implementing `TrackingStrategy`
-2. Register in `TrackingStrategyFactory`
-3. Add tests
-4. No changes needed elsewhere
+1. Add carrier to `backend/app/data/carriers.py`:
+   ```python
+   CARRIERS = [
+       # ... existing carriers
+       ("new_carrier", "New Carrier Name"),
+   ]
+   ```
+2. Carrier is automatically available through KeyDelivery API
+3. No code changes needed - KeyDelivery handles all tracking logic
 
 ### Adding New Features
 

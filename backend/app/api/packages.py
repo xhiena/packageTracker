@@ -7,16 +7,17 @@ from app.models.user import User
 from app.models.package import Package
 from app.api.schemas import PackageCreate, PackageResponse, PackageUpdate, TrackingInfo, CarrierInfo
 from app.api.deps import get_current_active_user
-from app.strategies.factory import TrackingStrategyFactory
+from app.strategies import keydelivery
+from app.data.carriers import CARRIERS
 
 router = APIRouter()
 
 
 @router.get("/carriers", response_model=CarrierInfo)
 def get_supported_carriers():
-    """Get list of supported carriers."""
-    carriers = TrackingStrategyFactory.get_supported_carriers()
-    return {"carriers": carriers}
+    """Get list of supported carriers with IDs and names."""
+    carrier_ids = [carrier_id for carrier_id, _ in CARRIERS]
+    return {"carriers": carrier_ids}
 
 
 @router.post("/", response_model=PackageResponse, status_code=status.HTTP_201_CREATED)
@@ -27,16 +28,17 @@ def create_package(
 ):
     """Add a new package to track."""
     # Validate carrier is supported
-    try:
-        strategy = TrackingStrategyFactory.get_strategy(package.carrier)
-    except ValueError as e:
+    carrier_lower = package.carrier.lower()
+    supported_carriers = [carrier_id for carrier_id, _ in CARRIERS]
+    
+    if carrier_lower != "auto" and carrier_lower not in supported_carriers:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            detail=f"Unsupported carrier: {package.carrier}"
         )
     
     # Validate tracking number format
-    if not strategy.validate_tracking_number(package.tracking_number):
+    if not keydelivery.validate_tracking_number(package.tracking_number):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid tracking number format for {package.carrier}"
@@ -163,17 +165,8 @@ def track_package(
             detail="Package not found"
         )
     
-    # Get tracking strategy for the carrier
-    try:
-        strategy = TrackingStrategyFactory.get_strategy(package.carrier)
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
-    
-    # Track the package
-    tracking_info = strategy.track(package.tracking_number)
+    # Track the package using KeyDelivery
+    tracking_info = keydelivery.track(package.tracking_number, package.carrier)
     
     # Update package with latest info
     if tracking_info.get("error") is None:

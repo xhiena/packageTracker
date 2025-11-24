@@ -22,9 +22,15 @@ class Settings(BaseSettings):
     APP_NAME: str = "Package Tracker"
     FRONTEND_URL: str = "http://localhost:3000"
     
+    # KeyDelivery
+    KEYDELIVERY_API_KEY: str = ""
+    KD100_APIKEY: str = ""
+    KD100_SECRET: str = ""
+    
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"
 
 
 settings = Settings()

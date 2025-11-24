@@ -1,172 +1,86 @@
 import pytest
-from app.strategies.correos import CorreosStrategy
-from app.strategies.gls import GLSStrategy
-from app.strategies.seur import SEURStrategy
-from app.strategies.factory import TrackingStrategyFactory
+from unittest.mock import patch, MagicMock
+from app.strategies import keydelivery
+from app.data.carriers import CARRIERS
 
 
-class TestCorreosStrategy:
-    """Test Correos tracking strategy."""
+class TestKeyDeliveryService:
+    """Test KeyDelivery tracking service."""
     
-    def test_carrier_name(self):
-        """Test carrier name property."""
-        strategy = CorreosStrategy()
-        assert strategy.carrier_name == "correos"
+    def test_validate_tracking_number(self):
+        """Test validation."""
+        assert keydelivery.validate_tracking_number("AB123456789ES") is True
+        assert keydelivery.validate_tracking_number("12345") is True
+        assert keydelivery.validate_tracking_number("") is False
+        assert keydelivery.validate_tracking_number("123") is False
     
-    def test_validate_tracking_number_valid(self):
-        """Test validation with valid tracking number."""
-        strategy = CorreosStrategy()
-        assert strategy.validate_tracking_number("AB123456789ES") is True
-        assert strategy.validate_tracking_number("XY987654321FR") is True
+    @patch("app.strategies.keydelivery.requests.post")
+    def test_detect_carrier_single(self, mock_post):
+        """Test carrier detection with single result."""
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "code": 200,
+            "message": "OK",
+            "data": [{"carrier_id": "dhl", "carrier_name": "DHL"}]
+        }
+        mock_response.raise_for_status.return_value = None
+        mock_post.return_value = mock_response
+        
+        carriers = keydelivery.detect_carrier("123456789")
+        
+        assert len(carriers) == 1
+        assert carriers[0]["carrier_id"] == "dhl"
     
-    def test_validate_tracking_number_invalid(self):
-        """Test validation with invalid tracking number."""
-        strategy = CorreosStrategy()
-        assert strategy.validate_tracking_number("123456789") is False
-        assert strategy.validate_tracking_number("AB12345678ES") is False  # Too short
-        assert strategy.validate_tracking_number("ABC123456789ES") is False  # Too many letters
-        assert strategy.validate_tracking_number("AB12345678XES") is False  # Letter in number part
-    
-    def test_track_valid_number(self):
-        """Test tracking with valid number."""
-        strategy = CorreosStrategy()
-        result = strategy.track("AB123456789ES")
+    @patch("app.strategies.keydelivery.requests.post")
+    def test_track_success(self, mock_post):
+        """Test tracking with valid response."""
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "code": 200,
+            "message": "OK",
+            "data": {
+                "carrier_id": "dhl",
+                "order_status_code": 4,
+                "items": [
+                    {
+                        "context": "Delivered",
+                        "time": "2023-01-01 12:00:00",
+                        "order_status_description": "Delivered",
+                        "location": "Madrid"
+                    }
+                ]
+            }
+        }
+        mock_response.raise_for_status.return_value = None
+        mock_post.return_value = mock_response
+        
+        result = keydelivery.track("123456789", "dhl")
         
         assert result["error"] is None
-        assert "status" in result
-        assert "location" in result
-        assert "history" in result
-        assert isinstance(result["history"], list)
+        assert result["status"] == "Delivered"
+        assert len(result["history"]) == 1
     
-    def test_track_invalid_number(self):
-        """Test tracking with invalid number."""
-        strategy = CorreosStrategy()
-        result = strategy.track("invalid123")
+    @patch("app.strategies.keydelivery.requests.post")
+    def test_track_api_error(self, mock_post):
+        """Test tracking with API error."""
+        mock_post.side_effect = Exception("API Error")
+        
+        result = keydelivery.track("123456789", "dhl")
         
         assert result["error"] is not None
         assert result["status"] == "error"
 
 
-class TestGLSStrategy:
-    """Test GLS tracking strategy."""
+class TestSupportedCarriers:
+    """Test supported carriers list."""
     
-    def test_carrier_name(self):
-        """Test carrier name property."""
-        strategy = GLSStrategy()
-        assert strategy.carrier_name == "gls"
-    
-    def test_validate_tracking_number_valid(self):
-        """Test validation with valid tracking number."""
-        strategy = GLSStrategy()
-        assert strategy.validate_tracking_number("12345678901") is True
-        assert strategy.validate_tracking_number("98765432109") is True
-    
-    def test_validate_tracking_number_invalid(self):
-        """Test validation with invalid tracking number."""
-        strategy = GLSStrategy()
-        assert strategy.validate_tracking_number("123456789") is False  # Too short
-        assert strategy.validate_tracking_number("123456789012") is False  # Too long
-        assert strategy.validate_tracking_number("1234567890A") is False  # Contains letter
-    
-    def test_track_valid_number(self):
-        """Test tracking with valid number."""
-        strategy = GLSStrategy()
-        result = strategy.track("12345678901")
-        
-        assert result["error"] is None
-        assert "status" in result
-        assert "location" in result
-        assert "history" in result
-        assert isinstance(result["history"], list)
-    
-    def test_track_invalid_number(self):
-        """Test tracking with invalid number."""
-        strategy = GLSStrategy()
-        result = strategy.track("invalid")
-        
-        assert result["error"] is not None
-        assert result["status"] == "error"
-
-
-class TestSEURStrategy:
-    """Test SEUR tracking strategy."""
-    
-    def test_carrier_name(self):
-        """Test carrier name property."""
-        strategy = SEURStrategy()
-        assert strategy.carrier_name == "seur"
-    
-    def test_validate_tracking_number_valid(self):
-        """Test validation with valid tracking number."""
-        strategy = SEURStrategy()
-        assert strategy.validate_tracking_number("1234567890") is True
-        assert strategy.validate_tracking_number("12345678901") is True
-        assert strategy.validate_tracking_number("123456789012") is True
-    
-    def test_validate_tracking_number_invalid(self):
-        """Test validation with invalid tracking number."""
-        strategy = SEURStrategy()
-        assert strategy.validate_tracking_number("123456789") is False  # Too short
-        assert strategy.validate_tracking_number("1234567890123") is False  # Too long
-        assert strategy.validate_tracking_number("123456789A") is False  # Contains letter
-    
-    def test_track_valid_number(self):
-        """Test tracking with valid number."""
-        strategy = SEURStrategy()
-        result = strategy.track("1234567890")
-        
-        assert result["error"] is None
-        assert "status" in result
-        assert "location" in result
-        assert "history" in result
-        assert isinstance(result["history"], list)
-    
-    def test_track_invalid_number(self):
-        """Test tracking with invalid number."""
-        strategy = SEURStrategy()
-        result = strategy.track("invalid")
-        
-        assert result["error"] is not None
-        assert result["status"] == "error"
-
-
-class TestTrackingStrategyFactory:
-    """Test the tracking strategy factory."""
-    
-    def test_get_supported_carriers(self):
-        """Test getting list of supported carriers."""
-        carriers = TrackingStrategyFactory.get_supported_carriers()
-        assert isinstance(carriers, list)
-        assert "correos" in carriers
-        assert "gls" in carriers
-        assert "seur" in carriers
-    
-    def test_get_strategy_correos(self):
-        """Test getting Correos strategy."""
-        strategy = TrackingStrategyFactory.get_strategy("correos")
-        assert isinstance(strategy, CorreosStrategy)
-        assert strategy.carrier_name == "correos"
-    
-    def test_get_strategy_gls(self):
-        """Test getting GLS strategy."""
-        strategy = TrackingStrategyFactory.get_strategy("gls")
-        assert isinstance(strategy, GLSStrategy)
-        assert strategy.carrier_name == "gls"
-    
-    def test_get_strategy_seur(self):
-        """Test getting SEUR strategy."""
-        strategy = TrackingStrategyFactory.get_strategy("seur")
-        assert isinstance(strategy, SEURStrategy)
-        assert strategy.carrier_name == "seur"
-    
-    def test_get_strategy_case_insensitive(self):
-        """Test that carrier names are case-insensitive."""
-        strategy1 = TrackingStrategyFactory.get_strategy("CORREOS")
-        strategy2 = TrackingStrategyFactory.get_strategy("Correos")
-        assert isinstance(strategy1, CorreosStrategy)
-        assert isinstance(strategy2, CorreosStrategy)
-    
-    def test_get_strategy_unsupported(self):
-        """Test getting strategy for unsupported carrier."""
-        with pytest.raises(ValueError, match="Unsupported carrier"):
-            TrackingStrategyFactory.get_strategy("unsupported")
+    def test_carriers_list(self):
+        """Test that carriers list is available and contains expected carriers."""
+        carrier_ids = [carrier_id for carrier_id, _ in CARRIERS]
+        assert isinstance(carrier_ids, list)
+        assert "spain_correos_es" in carrier_ids
+        assert "gls" in carrier_ids
+        assert "seur" in carrier_ids
+        assert "dhlen" in carrier_ids
+        assert "ups" in carrier_ids
+        assert "fedex" in carrier_ids

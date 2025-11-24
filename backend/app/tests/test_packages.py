@@ -1,4 +1,4 @@
-from fastapi import status
+﻿from fastapi import status
 
 
 def test_get_supported_carriers(client):
@@ -8,7 +8,7 @@ def test_get_supported_carriers(client):
     data = response.json()
     assert "carriers" in data
     assert isinstance(data["carriers"], list)
-    assert "correos" in data["carriers"]
+    assert "spain_correos_es" in data["carriers"]
     assert "gls" in data["carriers"]
 
 
@@ -18,7 +18,7 @@ def test_create_package_without_auth(client):
         "/api/packages/",
         json={
             "tracking_number": "AB123456789ES",
-            "carrier": "correos",
+            "carrier": "spain_correos_es",
             "description": "Test package"
         }
     )
@@ -31,7 +31,7 @@ def test_create_package_with_auth(client, auth_token):
         "/api/packages/",
         json={
             "tracking_number": "AB123456789ES",
-            "carrier": "correos",
+            "carrier": "spain_correos_es",
             "description": "Test package"
         },
         headers={"Authorization": f"Bearer {auth_token}"}
@@ -39,7 +39,7 @@ def test_create_package_with_auth(client, auth_token):
     assert response.status_code == status.HTTP_201_CREATED
     data = response.json()
     assert data["tracking_number"] == "AB123456789ES"
-    assert data["carrier"] == "correos"
+    assert data["carrier"] == "spain_correos_es"
     assert data["description"] == "Test package"
     assert "id" in data
 
@@ -64,8 +64,8 @@ def test_create_package_invalid_tracking_number(client, auth_token):
     response = client.post(
         "/api/packages/",
         json={
-            "tracking_number": "invalid",
-            "carrier": "correos",
+            "tracking_number": "123",
+            "carrier": "spain_correos_es",
             "description": "Test package"
         },
         headers={"Authorization": f"Bearer {auth_token}"}
@@ -81,7 +81,7 @@ def test_list_packages(client, auth_token):
         "/api/packages/",
         json={
             "tracking_number": "AB123456789ES",
-            "carrier": "correos",
+            "carrier": "spain_correos_es",
             "description": "Test package"
         },
         headers={"Authorization": f"Bearer {auth_token}"}
@@ -105,7 +105,7 @@ def test_get_package(client, auth_token):
         "/api/packages/",
         json={
             "tracking_number": "AB123456789ES",
-            "carrier": "correos",
+            "carrier": "spain_correos_es",
             "description": "Test package"
         },
         headers={"Authorization": f"Bearer {auth_token}"}
@@ -139,7 +139,7 @@ def test_update_package(client, auth_token):
         "/api/packages/",
         json={
             "tracking_number": "AB123456789ES",
-            "carrier": "correos",
+            "carrier": "spain_correos_es",
             "description": "Test package"
         },
         headers={"Authorization": f"Bearer {auth_token}"}
@@ -164,7 +164,7 @@ def test_delete_package(client, auth_token):
         "/api/packages/",
         json={
             "tracking_number": "AB123456789ES",
-            "carrier": "correos",
+            "carrier": "spain_correos_es",
             "description": "Test package"
         },
         headers={"Authorization": f"Bearer {auth_token}"}
@@ -188,26 +188,38 @@ def test_delete_package(client, auth_token):
 
 def test_track_package(client, auth_token):
     """Test tracking a package."""
+    from unittest.mock import patch
+    
     # Create a package
     create_response = client.post(
         "/api/packages/",
         json={
             "tracking_number": "AB123456789ES",
-            "carrier": "correos",
+            "carrier": "spain_correos_es",
             "description": "Test package"
         },
         headers={"Authorization": f"Bearer {auth_token}"}
     )
     package_id = create_response.json()["id"]
     
-    # Track the package
-    response = client.get(
-        f"/api/packages/{package_id}/track",
-        headers={"Authorization": f"Bearer {auth_token}"}
-    )
-    assert response.status_code == status.HTTP_200_OK
-    data = response.json()
-    assert "status" in data
-    assert "location" in data
-    assert "history" in data
-    assert isinstance(data["history"], list)
+    # Track the package - mock keydelivery.track
+    with patch('app.strategies.keydelivery.track') as mock_track:
+        mock_track.return_value = {
+            "status": "Delivered",
+            "location": "Madrid",
+            "history": [{"status": "Delivered", "location": "Madrid", "timestamp": "2023-01-01"}],
+            "error": None,
+            "carrier": "spain_correos_es"
+        }
+        
+        response = client.get(
+            f"/api/packages/{package_id}/track",
+            headers={"Authorization": f"Bearer {auth_token}"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert "status" in data
+        assert "location" in data
+        assert "history" in data
+        assert isinstance(data["history"], list)
+

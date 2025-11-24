@@ -54,6 +54,7 @@ class PackageCreate(BaseModel):
 
 class PackageUpdate(BaseModel):
     description: Optional[str] = None
+    carrier: Optional[str] = None
 
 
 class PackageResponse(BaseModel):
@@ -76,6 +77,7 @@ class TrackingInfo(BaseModel):
     location: Optional[str]
     history: List[Dict[str, Any]]
     error: Optional[str]
+    carrier: Optional[str] = None
 
 
 class CarrierInfo(BaseModel):
