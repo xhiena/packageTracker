@@ -13,8 +13,13 @@ class TestKeyDelivery(unittest.TestCase):
     def setUp(self):
         os.environ["KEYDELIVERY_API_KEY"] = "test_key"
 
+    @patch("app.strategies.keydelivery.settings")
     @patch("app.strategies.keydelivery.requests.post")
-    def test_track_success(self, mock_post):
+    def test_track_success(self, mock_post, mock_settings):
+        # Mock settings
+        mock_settings.KD100_APIKEY = "test_key"
+        mock_settings.KD100_SECRET = "test_secret"
+        
         # Mock response with correct format
         mock_response = MagicMock()
         mock_response.json.return_value = {
@@ -35,7 +40,7 @@ class TestKeyDelivery(unittest.TestCase):
         mock_response.raise_for_status.return_value = None
         mock_post.return_value = mock_response
 
-        result = keydelivery.track("123456789", "correos")
+        result = keydelivery.track("123456789", "spain_correos_es")
 
         self.assertEqual(result["status"], "Delivered")
         self.assertEqual(result["location"], "Madrid")

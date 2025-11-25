@@ -14,9 +14,13 @@ class TestKeyDeliveryService:
         assert keydelivery.validate_tracking_number("") is False
         assert keydelivery.validate_tracking_number("123") is False
     
+    @patch("app.strategies.keydelivery.settings")
     @patch("app.strategies.keydelivery.requests.post")
-    def test_detect_carrier_single(self, mock_post):
+    def test_detect_carrier_single(self, mock_post, mock_settings):
         """Test carrier detection with single result."""
+        mock_settings.KD100_APIKEY = "test_key"
+        mock_settings.KD100_SECRET = "test_secret"
+        
         mock_response = MagicMock()
         mock_response.json.return_value = {
             "code": 200,
@@ -31,9 +35,13 @@ class TestKeyDeliveryService:
         assert len(carriers) == 1
         assert carriers[0]["carrier_id"] == "dhl"
     
+    @patch("app.strategies.keydelivery.settings")
     @patch("app.strategies.keydelivery.requests.post")
-    def test_track_success(self, mock_post):
+    def test_track_success(self, mock_post, mock_settings):
         """Test tracking with valid response."""
+        mock_settings.KD100_APIKEY = "test_key"
+        mock_settings.KD100_SECRET = "test_secret"
+        
         mock_response = MagicMock()
         mock_response.json.return_value = {
             "code": 200,
@@ -60,9 +68,13 @@ class TestKeyDeliveryService:
         assert result["status"] == "Delivered"
         assert len(result["history"]) == 1
     
+    @patch("app.strategies.keydelivery.settings")
     @patch("app.strategies.keydelivery.requests.post")
-    def test_track_api_error(self, mock_post):
+    def test_track_api_error(self, mock_post, mock_settings):
         """Test tracking with API error."""
+        mock_settings.KD100_APIKEY = "test_key"
+        mock_settings.KD100_SECRET = "test_secret"
+        
         mock_post.side_effect = Exception("API Error")
         
         result = keydelivery.track("123456789", "dhl")
